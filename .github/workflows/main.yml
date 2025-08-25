@@ -1,33 +1,34 @@
-name: Remote Deployment to Jetson
+name: Project Validation
 
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Deploy to Jetson via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            echo "Deploying latest changes to Jetson..."
-            
-            # Repoyu güncelle
-            cd /path/to/your/project/
-            git pull origin main
-            
-            # Servisleri durdur, yeni imajları çek ve tekrar başlat
-            docker compose down
-            docker compose pull
-            docker compose up -d --remove-orphans
-            
-            echo "Deployment successful."
+      - name: Check for Docker Compose File
+        id: check_files
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            echo "Docker Compose file found."
+          else
+            echo "Error: docker-compose.yml file not found."
+            exit 1
+          fi
+
+      - name: Ready for Deployment
+        run: |
+          echo "Your project is successfully validated and ready to be deployed."
+          echo "To start the service on your Jetson device, run the following commands:"
+          echo "-----------------------------------------------------------------------"
+          echo "git pull origin main"
+          echo "docker compose up -d"
+          echo "-----------------------------------------------------------------------"
