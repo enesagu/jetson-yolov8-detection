@@ -1,0 +1,40 @@
+services:
+  # --- Lokal Nesne Tespiti ve Telemetri Servisi ---
+  yolo-local:
+    image: ultralytics/ultralytics:latest-jetson-jetpack6
+    container_name: yolo-local
+    working_dir: /workspace
+    command: ["sh", "-c", "pip install --no-cache-dir psutil && python3 /workspace/app/main.py"]
+    
+    # Host'un ağını ve donanımını doğrudan kullanır.
+    network_mode: host
+    runtime: nvidia
+    privileged: true
+    devices:
+      - /dev/video0:/dev/video0  # Yerel kameraya erişim için
+    
+    # Kod, model ve verilerin kalıcı olarak saklanmasını sağlar.
+    volumes:
+      - ./app:/workspace/app:rw
+      - ./models:/workspace/models:rw
+      - ./logs:/workspace/logs:rw
+      - ./outputs:/outputs:rw
+    
+    # Servisin konfigürasyonunu ayarlar. Harici sunucu bilgileri kaldırılmıştır.
+    environment:
+      - MODEL_PATH=/workspace/models/yolov8n.pt
+      - CONF=0.25
+      - MAX_DET=300
+      - IMG_SIZE=640
+      - DETECTION_INTERVAL=0.5
+      - TZ=Europe/Istanbul
+      - OUTPUT_DIR=/outputs
+      - OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp|rw_timeout;3000000|stimeout;3000000|timeout;3000000
+    
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
